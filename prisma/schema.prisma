@@ -48,7 +48,7 @@ type MktAudienceMoreUsedType {
 enum genderEnum {
     MALE    
     FEMALE
-}
+}//r
 
 enum mktOperatorEnum {
     PLUS
