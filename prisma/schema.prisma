@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
+    provider = "mongodb"
     // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
     // Further reading:
     // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
@@ -14,61 +14,96 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
 
-    @@index([name])
-}
-
-// Necessary for Next auth
-model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
-
-    @@unique([provider, providerAccountId])
-}
-
-model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
+// modello basato sui dati del gateway
 model User {
-    id            String    @id @default(cuid())
+    id            String   @id @default(auto()) @map("_id") @db.ObjectId
+    eosId         String
     name          String?
-    email         String?   @unique
+    email         String?  @unique
     emailVerified DateTime?
     image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
 }
 
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
 
-    @@unique([identifier, token])
+model MktPersonalizedAudience {
+ id                   String @id @default(auto()) @map("_id") @db.ObjectId
+ eosId                String @unique //reference to EOS Mapper id
+ audienceMoreUsed     MktAudienceMoreUsedType
+ personalizedAudience Boolean @default(false)
+ createdAt            DateTime @default(now())
+ updateAt             DateTime @updatedAt
 }
+
+type MktAudienceMoreUsedType {
+    todayBirthday  Boolean @default(false)
+    monthBirthday Boolean @default(false)
+    overTwoHundredShopping Boolean @default(false)
+    overTenOrder Boolean @default(false)
+    fideltyBalanceOverOneHundred Boolean @default(false)
+    appMobileActiveLastMonth Boolean @default(false)
+}
+
+enum genderEnum {
+    MALE    
+    FEMALE
+}
+
+enum mktOperatorEnum {
+    PLUS
+    EQUAL
+    MINUS
+    ALL
+    FALSE
+}
+
+type mktConditions {
+    operator mktOperatorEnum @default(ALL)
+    mktConditions String
+}
+
+
+//valutare se i capi data vanno aggiunti nel type o nel model
+type MktUserPersonalDataType {
+    name String
+    surname String
+    birthDay DateTime
+    age Int
+    gender genderEnum @default(MALE)
+    activationDate DateTime
+    acceptedMarketingPolicy Boolean
+    acceptedGDPR Boolean
+}
+//valutare se i capi data vanno aggiunti nel type o nel model
+type MktFidelityType {
+  campaign String
+  activity String
+  operator mktOperatorEnum
+  balance Float
+}
+
+//valutare se i capi data vanno aggiunti nel type o nel model
+type MktTransactionFidelityCardType{
+    operator mktOperatorEnum
+    value Int
+}
+
+type MktCouponsType {
+name String 
+isOtained Boolean @default(false)
+burned MktBurnType
+expired Boolean @default(false)
+}
+
+type MktBurnType {
+    isBurned Boolean @default(false)
+    vlaue Float @default(0.0)
+    dateRange MktDateType
+}
+
+type MktDateType {
+    beginDate DateTime
+    endDate DateTime
+}
+
