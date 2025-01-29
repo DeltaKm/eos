@@ -1,4 +1,14 @@
 
+/* 
+Index:
+   Inizio Data Model                     Line => 21
+       User Model                        Line => 24   
+       MktPersonalizedAudience           Line => 34      
+       MktDeletedPersonalizedAudience    Line => 52   
+   Inizio Type Section                   Line => 62    
+   Inizio EnumSection                    Line => 240 
+*/
+
 generator client {
     provider = "prisma-client-js"
 }
@@ -7,6 +17,8 @@ datasource db {
     provider = "mongodb"
     url      = env("DATABASE_URL")
 }
+
+/*************** Inizio Data Model ****************/
 
 // modello basato sui dati del gateway in attesa di interfaccia
 model User {
@@ -19,30 +31,40 @@ model User {
     image         String?
 }
 
-// reference to eos mapper
-type MktEosIdType {
+model MktPersonalizedAudience {
+    id                String @id @default(auto()) @map("_id") @db.ObjectId
+    userId            String @db.ObjectId // reference to user
+    title             String?
+    description       String?
+    systemCheckflag   MktSystemCheckFlagType?
+    frotnendCheckFlag MktFrontendCheckFlagType?
+    personalData      MktPersonalDataType?
+    fidelity          MktFidelityType?
+    coupons           MktCouponsType?
+    sold              String []
+    userList          MktUserListType []
+    software          MktSoftwareType?
+    createdAt         DateTime @default(now())
+    updateAt          DateTime @updatedAt
+}
+
+// Store del pubblico personalizzato eliminato 
+model MktDeletedPersonalizedAudience {
+    id                     String @id @default(auto()) @map("_id") @db.ObjectId
+    personalizedAudienceId String @db.ObjectId // reference to MktPresolaziedAudience
+    createdAt              DateTime @default(now())
+    updateAt               DateTime @updatedAt
+}
+
+/********************************************/
+
+
+/*************** Inizio Type Section ****************/
+
+type MktEosIdType { // reference => EOS Mapper
     eosId    String
     software String
 }
-
-// Fidelityy e couppon hanno un concetto separato?
-model MktPersonalizedAudience {
-    id               String @id @default(auto()) @map("_id") @db.ObjectId
-    userId           String @db.ObjectId // reference to user
-    title            String?
-    description      String?
-    checkflag        MktCheckFlagType?
-    audienceMoreUsed MktAudienceMoreUsedType? 
-    personalData     MktPersonalDataType?
-    Fidelity         MktFidelityType?
-    Coupons          String [] // reference to type
-    sold             String []
-    userList         String [] @db.ObjectId @default([]) // reference to type (da chidere a carlo da chi provengono)
-    software         MktSoftwareType?
-    createdAt        DateTime @default(now())
-    updateAt         DateTime @updatedAt
-}
-
 
 type MktSoftwareType {
     signWow         Boolean @default(false)
@@ -53,15 +75,6 @@ type MktSoftwareType {
     bacco           Boolean @default(false)
 }
 
-// store del pubblico eliminato 
-model MktDeletedPersonalizedAudience {
-    id                     String @id @default(auto()) @map("_id") @db.ObjectId
-    personalizedAudienceId String @db.ObjectId // reference to MktPresolaziedAudience
-    createdAt              DateTime @default(now())
-    updateAt               DateTime @updatedAt
-}
-
-//valutare se i capi data vanno aggiunti nel type o nel model
 type MktPersonalDataType {
     name                    MktComparisonType [] 
     surname                 MktComparisonType []
@@ -73,50 +86,30 @@ type MktPersonalDataType {
     acceptedGDPR            Boolean? @default(false)
 }
 
-type MktCheckFlagType {
+type MktSystemCheckFlagType {
     operationIsActive    Boolean @default(false)
-    personalizedAudience Boolean @default(false) // per calcolare con le statistiche quanti profili sono attivi con la personalizzazione
+    personalizedIsActive Boolean @default(false)
     isDeleted            Boolean @default(false)
 }
 
-// da modificare per fornire i settaggi frontend per i prese consigliati
+type MktFrontendCheckFlagType {
+    AudienceMoreUsed MktAudienceMoreUsedType?
+    isActivePersonalData Boolean? @default(false)
+    isActiveFidelity     Boolean? @default(false)
+    isActiveCoupons      Boolean? @default(false)
+    isActiveSold         Boolean? @default(false)
+    isActiveUserList     Boolean? @default(false)
+    isActiveSoftware     Boolean? @default(false)
+
+}
+
 type MktAudienceMoreUsedType {
-    todayBirthday                Boolean @default(false)
-    monthBirthday                Boolean @default(false)
-    overTwoHundredShopping       Boolean @default(false)
-    overTenOrder                 Boolean @default(false)
-    fideltyBalanceOverOneHundred Boolean @default(false)
-    appMobileActiveLastMonth     Boolean @default(false)
-}
-
-enum MktGenderEnum {
-    MALE    
-    FEMALE
-}
-
-enum MktOperatorEnum {
-    PLUS
-    EQUAL
-    MINUS
-    ALL
-    FALSE
-    CONATINS
-}
-
-type MktConditionsType {
-    operator      MktOperatorEnum @default(ALL)
-    mktConditions String
-}
-
-type MktComparisonType {
-    operator MktOperatorEnum? @default(CONATINS)
-    value    String?
-}
-
-enum MktbirthDayPersonalDataEnum {
-    TODAY
-    THISWEEK
-    THISMONTH
+    isActiveTodayBirthday                Boolean @default(false)
+    isActiveMonthBirthday                Boolean @default(false)
+    isActiveOverTwoHundredShopping       Boolean @default(false)
+    isActiveOverTenOrder                 Boolean @default(false)
+    isActiveFideltyBalanceOverOneHundred Boolean @default(false)
+    isActiveAppMobileActiveLastMonth     Boolean @default(false)
 }
 
 type MktAgeType {
@@ -124,15 +117,14 @@ type MktAgeType {
     age      Int?
 }
 
-//valutare se i capi data vanno aggiunti nel type o nel model
 type MktFidelityType {
     campainActivityBalance MktCampainActivityBalanceType []
     transactionFidelty     MktTransactionFidelityCardType []
 }
 
 type MktCampainActivityBalanceType {
-    campaign            String [] @default([]) // reference to user campain
-    activity            String [] @default([]) // reference to user activity
+    campaignId            String [] @default([]) // reference to user campain
+    activityId            String [] @default([]) // reference to user activity
     balanceOperator     MktOperatorEnum?
     balance             Float?
     balanceFidelityDate MktDateType []
@@ -145,18 +137,32 @@ type MktTransactionFidelityCardType{
     transactionDate MktDateType []
 }
 
-// da fixare
 type MktCouponsType {
-    name      String 
-    isOtained Boolean @default(false)
-    burned    MktBurnType
-    expired   Boolean @default(false)
+    couponNameId String [] // reference to user coupons
+    achievements MktCouponsAchievementsType
+    burns        MktCouponsBurnType
+    expired      Boolean @default(false)
 }
 
-type MktBurnType {
-    isBurned  Boolean @default(false)
-    vlaue     Float @default(0.0)
-    burnedDate MktDateType
+type MktCouponsAchievementsType {
+    isOtained              Boolean? @default(false)
+    achievementsComparison MktComparisonType?
+    value                  Float? @default(0.0)
+    achievementsDate       MktDateType?
+}
+
+type MktCouponsBurnType {
+    isBurned       Boolean? @default(false)
+    burnComparison MktComparisonType?
+    value          Float? @default(0.0)
+    burnedDate     MktDateType?
+}
+
+type MktCouponsExpirationType {
+    isExpired            Boolean? @default(false)
+    expirationComparison MktComparisonType?
+    value                Float? @default(0.0)
+    expiredData          MktPersonalDataType? // da chiedere se la data ha lo stesso di burn e achievements
 }
 
 type MktRangeDateType {
@@ -164,25 +170,31 @@ type MktRangeDateType {
     endDate        DateTime
 }
 
-// da finire con la modalità avanzata
 type MktDateType {
     dateRange      MktRangeDateType?
     isAutoUpdate   Boolean? @default(false)
     advancedMode   MktAdvancedDateType?
 }
-// mdoalità cacacazzi santell
+
+// mdoalità scassacazzi -_-'
 type MktAdvancedDateType {
-    isAdvancedMode Boolean @default(false)
+    isAdvancedMode Boolean? @default(false)
     comparison     MktAdvancedDateComparisonEnum?
     day            MktAdvancedFieldDateDayType?
     month          MktAdvancedFieldDateMonthType?
     year           MktAdvancedFieldDateYearType?
 }
-enum MktAdvancedDateComparisonEnum {
-    EXACTLY
-    AFTER
-    BEFORE
+
+type MktConditionsType {
+    operator      MktOperatorEnum @default(ALL)
+    mktConditions String
 }
+
+type MktComparisonType {
+    operator MktOperatorEnum? @default(CONATINS)
+    value    String?
+}
+
 type MktAdvancedFieldDateDayType {
     any          Boolean @default(false)
     today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
@@ -201,6 +213,16 @@ type MktAdvancedFieldDateYearType {
     personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
 }
 
+type MktUserListType {
+    id          String? // refrerence to id
+    name        String? 
+    email       String?
+    bornDate    DateTime?
+    phoneNumber String?
+    address     String?
+}
+
+// prototipo
 type MktNotificationsType {
     eosClientId           String[]
     title                 String
@@ -209,3 +231,36 @@ type MktNotificationsType {
     NumberClienttSelected Int
     sendStatus            Int
 }
+
+/********************************************/
+
+
+/*************** Inizio Enum Section ****************/
+
+enum MktGenderEnum {
+    MALE    
+    FEMALE
+}
+
+enum MktOperatorEnum {
+    PLUS
+    EQUAL
+    MINUS
+    ALL    
+    CONATINS
+    FALSE
+}
+
+enum MktbirthDayPersonalDataEnum {
+    TODAY
+    THISWEEK
+    THISMONTH
+}
+
+enum MktAdvancedDateComparisonEnum {
+    EXACTLY
+    AFTER
+    BEFORE
+}
+
+/********************************************/
