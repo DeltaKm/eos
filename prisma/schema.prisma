@@ -6,7 +6,7 @@ Index:
        MktPersonalizedAudience           Line => 34      
        MktDeletedPersonalizedAudience    Line => 52   
    Inizio Type Section                   Line => 62    
-   Inizio EnumSection                    Line => 240 
+   Inizio EnumSection                    Line => 238 
 */
 
 generator client {
