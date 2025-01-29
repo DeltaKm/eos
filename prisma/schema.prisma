@@ -1,5 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
     provider = "prisma-client-js"
@@ -7,103 +5,207 @@ generator client {
 
 datasource db {
     provider = "mongodb"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url      = env("DATABASE_URL")
 }
 
-
-
-// modello basato sui dati del gateway
+// modello basato sui dati del gateway in attesa di interfaccia
 model User {
     id            String   @id @default(auto()) @map("_id") @db.ObjectId
-    eosId         String
+    eosId         MktEosIdType
+    referenceAPP  String []     // app di riferimento da cui provnegono gli utenti
     name          String?
     email         String?  @unique
     emailVerified DateTime?
     image         String?
 }
 
+// reference to eos mapper
+type MktEosIdType {
+    eosId    String
+    software String
+}
 
+// Fidelityy e couppon hanno un concetto separato?
 model MktPersonalizedAudience {
- id                   String @id @default(auto()) @map("_id") @db.ObjectId
- eosId                String @unique //reference to EOS Mapper id
- audienceMoreUsed     MktAudienceMoreUsedType
- personalizedAudience Boolean @default(false)
- createdAt            DateTime @default(now())
- updateAt             DateTime @updatedAt
+    id               String @id @default(auto()) @map("_id") @db.ObjectId
+    userId           String @db.ObjectId // reference to user
+    title            String?
+    description      String?
+    checkflag        MktCheckFlagType?
+    audienceMoreUsed MktAudienceMoreUsedType? 
+    personalData     MktPersonalDataType?
+    Fidelity         MktFidelityType?
+    Coupons          String [] // reference to type
+    sold             String []
+    userList         String [] @db.ObjectId @default([]) // reference to type (da chidere a carlo da chi provengono)
+    software         MktSoftwareType?
+    createdAt        DateTime @default(now())
+    updateAt         DateTime @updatedAt
 }
 
+
+type MktSoftwareType {
+    signWow         Boolean @default(false)
+    wowCommerce     Boolean @default(false)
+    appMobile       Boolean @default(false)
+    webAppSelfOrder Boolean @default(false)
+    webAppPagamento Boolean @default(false)
+    bacco           Boolean @default(false)
+}
+
+// store del pubblico eliminato 
+model MktDeletedPersonalizedAudience {
+    id                     String @id @default(auto()) @map("_id") @db.ObjectId
+    personalizedAudienceId String @db.ObjectId // reference to MktPresolaziedAudience
+    createdAt              DateTime @default(now())
+    updateAt               DateTime @updatedAt
+}
+
+//valutare se i capi data vanno aggiunti nel type o nel model
+type MktPersonalDataType {
+    name                    MktComparisonType [] 
+    surname                 MktComparisonType []
+    birthDay                MktbirthDayPersonalDataEnum? // compleanno ne verrà selezioanto solo uno, da chiedere a carlo
+    age                     MktAgeType [] 
+    gender                  MktGenderEnum? 
+    userActivationDate      MktDateType[]
+    acceptedMarketingPolicy Boolean? @default(false)
+    acceptedGDPR            Boolean? @default(false)
+}
+
+type MktCheckFlagType {
+    operationIsActive    Boolean @default(false)
+    personalizedAudience Boolean @default(false) // per calcolare con le statistiche quanti profili sono attivi con la personalizzazione
+    isDeleted            Boolean @default(false)
+}
+
+// da modificare per fornire i settaggi frontend per i prese consigliati
 type MktAudienceMoreUsedType {
-    todayBirthday  Boolean @default(false)
-    monthBirthday Boolean @default(false)
-    overTwoHundredShopping Boolean @default(false)
-    overTenOrder Boolean @default(false)
+    todayBirthday                Boolean @default(false)
+    monthBirthday                Boolean @default(false)
+    overTwoHundredShopping       Boolean @default(false)
+    overTenOrder                 Boolean @default(false)
     fideltyBalanceOverOneHundred Boolean @default(false)
-    appMobileActiveLastMonth Boolean @default(false)
+    appMobileActiveLastMonth     Boolean @default(false)
 }
 
-enum genderEnum {
+enum MktGenderEnum {
     MALE    
     FEMALE
-}//r
+}
 
-enum mktOperatorEnum {
+enum MktOperatorEnum {
     PLUS
     EQUAL
     MINUS
     ALL
     FALSE
+    CONATINS
 }
 
-type mktConditions {
-    operator mktOperatorEnum @default(ALL)
+type MktConditionsType {
+    operator      MktOperatorEnum @default(ALL)
     mktConditions String
 }
 
+type MktComparisonType {
+    operator MktOperatorEnum? @default(CONATINS)
+    value    String?
+}
+
+enum MktbirthDayPersonalDataEnum {
+    TODAY
+    THISWEEK
+    THISMONTH
+}
+
+type MktAgeType {
+    operator MktOperatorEnum? @default(EQUAL)
+    age      Int?
+}
 
 //valutare se i capi data vanno aggiunti nel type o nel model
-type MktUserPersonalDataType {
-    name String
-    surname String
-    birthDay DateTime
-    age Int
-    gender genderEnum @default(MALE)
-    activationDate DateTime
-    acceptedMarketingPolicy Boolean
-    acceptedGDPR Boolean
-}
-//valutare se i capi data vanno aggiunti nel type o nel model
 type MktFidelityType {
-  campaign String
-  activity String
-  operator mktOperatorEnum
-  balance Float
+    campainActivityBalance MktCampainActivityBalanceType []
+    transactionFidelty     MktTransactionFidelityCardType []
+}
+
+type MktCampainActivityBalanceType {
+    campaign            String [] @default([]) // reference to user campain
+    activity            String [] @default([]) // reference to user activity
+    balanceOperator     MktOperatorEnum?
+    balance             Float?
+    balanceFidelityDate MktDateType []
 }
 
 //valutare se i capi data vanno aggiunti nel type o nel model
 type MktTransactionFidelityCardType{
-    operator mktOperatorEnum
-    value Int
+    operator MktOperatorEnum
+    value    Int
+    transactionDate MktDateType []
 }
 
+// da fixare
 type MktCouponsType {
-name String 
-isOtained Boolean @default(false)
-burned MktBurnType
-expired Boolean @default(false)
+    name      String 
+    isOtained Boolean @default(false)
+    burned    MktBurnType
+    expired   Boolean @default(false)
 }
 
 type MktBurnType {
-    isBurned Boolean @default(false)
-    vlaue Float @default(0.0)
-    dateRange MktDateType
+    isBurned  Boolean @default(false)
+    vlaue     Float @default(0.0)
+    burnedDate MktDateType
 }
 
+type MktRangeDateType {
+    beginDate      DateTime
+    endDate        DateTime
+}
+
+// da finire con la modalità avanzata
 type MktDateType {
-    beginDate DateTime
-    endDate DateTime
+    dateRange      MktRangeDateType?
+    isAutoUpdate   Boolean? @default(false)
+    advancedMode   MktAdvancedDateType?
+}
+// mdoalità cacacazzi santell
+type MktAdvancedDateType {
+    isAdvancedMode Boolean @default(false)
+    comparison     MktAdvancedDateComparisonEnum?
+    day            MktAdvancedFieldDateDayType?
+    month          MktAdvancedFieldDateMonthType?
+    year           MktAdvancedFieldDateYearType?
+}
+enum MktAdvancedDateComparisonEnum {
+    EXACTLY
+    AFTER
+    BEFORE
+}
+type MktAdvancedFieldDateDayType {
+    any          Boolean @default(false)
+    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
 }
 
+type MktAdvancedFieldDateMonthType {
+    any          Boolean @default(false)
+    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+}
+
+type MktAdvancedFieldDateYearType {
+    any          Boolean @default(false)
+    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+}
+
+type MktNotificationsType {
+    eosClientId           String[]
+    title                 String
+    desc                  String
+    scheduleDate          DateTime //data in cui inoltrare notifica
+    NumberClienttSelected Int
+    sendStatus            Int
+}
