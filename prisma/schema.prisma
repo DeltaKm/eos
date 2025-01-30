@@ -270,3 +270,32 @@ enum MktAdvancedDateComparisonEnum {
 /********************************************/
 
 // implementazione server solo cron?
+// db sullo stesso cluster?
+// - un db per i cron etc
+// - un db per i dati utenti
+// - un db per le operazioni
+// - un db per le personalizzazioni
+
+
+/* dati anagrafica EasyApper da adattare in base al gateway
+bozza per fare test 
+*/
+type anagraficaEasyApper {
+    userId String
+    gendere MktGenderEnum
+    name String
+    surname String
+    birthDate DateTime
+    taxId String
+    lotteryCode String
+    address String
+    zipCode String
+    city String
+    province String
+    regione String
+    state String
+    phone String
+    mobile String
+    fax String
+    email String
+}
