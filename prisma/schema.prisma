@@ -20,7 +20,7 @@ datasource db {
 
 /*************** Inizio Data Model ****************/
 
-// modello basato sui dati del gateway in attesa di interfaccia
+// modello basato sui dati del gateway in attesa interfaccia
 model User {
     id            String   @id @default(auto()) @map("_id") @db.ObjectId
     eosId         MktEosIdType
@@ -124,7 +124,9 @@ type MktFidelityType {
 
 type MktCampainActivityBalanceType {
     campaignId            String [] @default([]) // reference to user campain
+    campainLabel          String
     activityId            String [] @default([]) // reference to user activity
+    activityLabel         String
     balanceOperator     MktOperatorEnum?
     balance             Float?
     balanceFidelityDate MktDateType []
@@ -139,6 +141,7 @@ type MktTransactionFidelityCardType{
 
 type MktCouponsType {
     couponNameId String [] // reference to user coupons
+    couponLabel String
     achievements MktCouponsAchievementsType
     burns        MktCouponsBurnType
     expired      Boolean @default(false)
@@ -196,21 +199,21 @@ type MktComparisonType {
 }
 
 type MktAdvancedFieldDateDayType {
-    any          Boolean @default(false)
-    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
-    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    any          Boolean  @default(false)
+    today        Int?     @default(0)
+    personalized DateTime @default(now()) // da chidere se impostano l'anno   
 }
-
+// da cambiare il personalized
 type MktAdvancedFieldDateMonthType {
-    any          Boolean @default(false)
-    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
-    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    any          Boolean  @default(false)
+    today        Int?     @default(0)  
+    personalized DateTime @default(now()) 
 }
 
 type MktAdvancedFieldDateYearType {
-    any          Boolean @default(false)
-    today        Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
-    personalized Int?    @default(0) // intero positivo o negativo abilitare i controll sull input
+    any          Boolean  @default(false)
+    today        Int?     @default(0) 
+    personalized DateTime @default(now())
 }
 
 type MktUserListType {
@@ -240,6 +243,7 @@ type MktNotificationsType {
 enum MktGenderEnum {
     MALE    
     FEMALE
+    OTHER
 }
 
 enum MktOperatorEnum {
